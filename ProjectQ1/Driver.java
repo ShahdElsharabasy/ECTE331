@@ -1,10 +1,11 @@
 package ProjectQ1;
-
 import java.util.Random;
 import java.util.Scanner;
 
+
 public class File_Logger{
 	final int Max_Backup = 5;
+
 }
 
 public class Driver {
@@ -24,9 +25,6 @@ public class Driver {
 		System.out.println(" The randomly generated temperature is: "+ temperature);
 		
 		double humidty = generateHumidty();
-		//System.out.println(" Please Enter a humidty: "+ humidty);
-		
-		
 		System.out.println(" The randomly generated humidity is: "+ humidty);
 		
 		for(int i=0;i<3; i++) {
@@ -43,6 +41,10 @@ public class Driver {
 }
 	
 	private static double genrateThirdSensor() {
-		return (int) (random.nextDouble)();
+		return (int) (random.nextDouble()*10);
+	}
+	
+	private static double majorityVoter(double [] third_sensor) {
+		return 
 	}
 }
