@@ -75,43 +75,43 @@ public class Driver {
 				outlierSensorIDs.add("S3.1 (value " + replica1 + ")");
 				outlierSensorIDs.add("S3.2 (value " + replica2 + ")");
 				outlierSensorIDs.add("S3.3 (value " + replica3 + ")");
-			} else { // Majority (maxCount >= 2) exists, identify the non-majority (outlier) sensor(s).
-				if (s3_replica1 != determinedValue) outlierSensorIDs.add("S3.1 (value " + s3_replica1 + ")");
-				if (s3_replica2 != determinedValue) outlierSensorIDs.add("S3.2 (value " + s3_replica2 + ")");
-				if (s3_replica3 != determinedValue) outlierSensorIDs.add("S3.3 (value " + s3_replica3 + ")");
+			} else { 
+				if (replica1 != determinedValue) outlierSensorIDs.add("S3.1 (value " + replica1 + ")");
+				if (replica2 != determinedValue) outlierSensorIDs.add("S3.2 (value " + replica2 + ")");
+				if (replica3 != determinedValue) outlierSensorIDs.add("S3.3 (value " + replica3 + ")");
 			}
 			if (!outlierSensorIDs.isEmpty()) {
 				discrepancyLogMessage.append("Outlier Sensor ID(s): ").append(String.join(", ", outlierSensorIDs));
 			}
 			logger.log(BASE_LOG_FILE_NAME, discrepancyLogMessage.toString());
-			System.out.println("SYSTEM_CONSOLE: " + discrepancyLogMessage); // Also print to console for visibility
+			System.out.println("SYSTEM_CONSOLE: " + discrepancyLogMessage); 
 		}
 
-		if (maxCount >= 2) { // Majority of 2 or 3 exists
+		if (maxCount >= 2) { 
 			System.out.println("Sensor 3 - Majority Voter: Determined value is " + determinedValue + " (based on " + maxCount + " identical readings)");
-			previousValidCriticalValue = determinedValue; // Update the known good value
+			previousValidCriticalValue = determinedValue; 
 			return determinedValue;
-		} else { // No majority (all values different, maxCount will be 1)
+		} else { 
 			System.out.println("Sensor 3 - Majority Voter: No majority found (all three replica values are different).");
 			if (previousValidCriticalValue != -1) {
 				System.out.println("Sensor 3 - Majority Voter: Falling back to previous valid value: " + previousValidCriticalValue);
 				// Log this fallback event clearly
 				logger.log(BASE_LOG_FILE_NAME, "Sensor 3: No majority, fell back to previous value: " + previousValidCriticalValue +
-											 ". Current differing values were: S3.1=" + s3_replica1 + ", S3.2=" + s3_replica2 + ", S3.3=" + s3_replica3);
+											 ". Current differing values were: S3.1=" + replica1 + ", S3.2=" + replica2 + ", S3.3=" + replica3);
 				return previousValidCriticalValue;
 			} else {
 				System.out.println("Sensor 3 - Majority Voter: No previous valid value available, returning -1 as error/default.");
 				// Log this critical state
 				logger.log(BASE_LOG_FILE_NAME, "CRITICAL_VOTER_ALERT: No majority in Sensor 3 and no previous value available. " +
-											 ". Values: S3.1=" + s3_replica1 + ", S3.2=" + s3_replica2 + ", S3.3=" + s3_replica3 + ". Returning -1.");
-				return -1; // Error or default indicator, as no fallback is possible
+											 ". Values: S3.1=" + replica1 + ", S3.2=" + replica2 + ", S3.3=" + replica3 + ". Returning -1.");
+				return -1; 
 			}
 		}
 	}
 
 	
 	public void runSingleSimulationCycle() {
-		System.out.println("\n--- New Simulation Cycle ---");
+		
 
 		// Sensor 1: Temperature
 		int currentTemperature = generateTemperature();
@@ -120,8 +120,8 @@ public class Driver {
 
 		// Sensor 2: Humidity
 		int currentHumidity = generateHumidity();
-		System.out.println("Sensor 2 (Humidity): " + currentHumidity + " % RH");
-		logger.log(BASE_LOG_FILE_NAME, "Humidity reading: " + currentHumidity + " % RH");
+		System.out.println("Sensor 2 (Humidity): " + currentHumidity);
+		logger.log(BASE_LOG_FILE_NAME, "Humidity reading: " + currentHumidity);
 
 		// Sensor 3: Critical Sensor (with three replicas)
 		int s3_val1 = generateCriticalSensorReplicaValue();
@@ -155,7 +155,7 @@ public class Driver {
 			System.out.println(complexAlert);
 			logger.log(BASE_LOG_FILE_NAME, complexAlert);
 		}
-		System.out.println("--- End of Cycle ---");
+
 	}
 
 	/**
@@ -168,12 +168,12 @@ public class Driver {
 		// It's good practice to establish an initial previousValidCriticalValue if possible.
 		// This run of the voter will set it, and log if there's an initial discrepancy.
 		System.out.println("Performing initial read for Sensor 3 to establish a baseline for 'previousValidCriticalValue'...");
-		int init_s3_1 = systemSimulator.generateCriticalSensorReplicaValue();
-		int init_s3_2 = systemSimulator.generateCriticalSensorReplicaValue();
-		int init_s3_3 = systemSimulator.generateCriticalSensorReplicaValue();
-		int initialVotedVal = systemSimulator.majorityVoterForSensor3(init_s3_1, init_s3_2, init_s3_3);
-		// The previousValidCriticalValue is now set internally by the above call if a majority was found.
-		if (initialVotedVal != -1) { // Or check systemSimulator.previousValidCriticalValue
+		int init_s3_1 = systemSimulator.generateThirdSensor();
+		int init_s3_2 = systemSimulator.generateThirdSensor();
+		int init_s3_3 = systemSimulator.generateThirdSensor();
+		int initialVotedVal = systemSimulator.majorityVoter(init_s3_1, init_s3_2, init_s3_3);
+
+		if (initialVotedVal != -1) { 
 			 System.out.println("Initial baseline for Sensor 3's previousValidCriticalValue has been set to: " + systemSimulator.previousValidCriticalValue);
 		} else {
 			System.out.println("Initial baseline for Sensor 3 could not be established via majority vote (current values likely differed and no prior existed). Fallback will be -1 if needed on first real cycle.");
