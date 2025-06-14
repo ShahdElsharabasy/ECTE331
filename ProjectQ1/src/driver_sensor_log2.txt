@@ -1,0 +1,7 @@
+2025-06-14 21:00:53.966 - Sensor 2 (Humidity) reading: 80.77393397970567 %RH
+2025-06-14 21:00:53.969 - Sensor 3 Discrepancy: Values [11.0, 8.0, 14.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:00:53.972 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:03:26.728 - Sensor 1 (Temperature) reading: 3.086432628177015 C
+2025-06-14 21:09:36.320 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:11:44.413 - Sensor 2 (Humidity) reading: 76.7200339362306 %RH
+2025-06-14 21:11:44.416 - Sensor 3, Replica 3 raw value: 10.0

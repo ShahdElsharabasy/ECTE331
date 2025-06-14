@@ -1,0 +1,28 @@
+2025-06-14 21:00:36.502 - --- System Simulation Started ---
+2025-06-14 21:00:53.963 - User set temperature cap to: 20.0
+2025-06-14 21:00:53.965 - Sensor 1 (Temperature) reading: 11.426300562364588 C
+2025-06-14 21:00:53.967 - Sensor 3, Replica 1 raw value: 11.0
+2025-06-14 21:00:53.975 - --- System Simulation Finished ---
+2025-06-14 21:02:43.157 - User set temperature cap to: 100.0
+2025-06-14 21:02:43.161 - Sensor 3, Replica 1 raw value: 1.0
+2025-06-14 21:02:43.162 - Sensor 3, Replica 2 raw value: 2.0
+2025-06-14 21:02:43.163 - Sensor 3, Replica 3 raw value: 7.0
+2025-06-14 21:02:43.164 - Sensor 3 Discrepancy: Values [1.0, 2.0, 7.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:02:43.167 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:03:26.729 - Sensor 2 (Humidity) reading: 42.29546794461495 %RH
+2025-06-14 21:03:26.731 - Sensor 3, Replica 1 raw value: 11.0
+2025-06-14 21:03:26.734 - Sensor 3, Replica 3 raw value: 10.0
+2025-06-14 21:03:26.736 - Sensor 3 Discrepancy: Values [11.0, 11.0, 10.0]. Majority is 11.0. Outlier sensor ID: S3 (value 10.0)
+2025-06-14 21:03:26.737 - Sensor 3 (Critical Sensor) - Final Voted Value: 11.0
+2025-06-14 21:09:20.822 - --- System Simulation Started ---
+2025-06-14 21:09:36.314 - Sensor 3, Replica 1 raw value: 15.0
+2025-06-14 21:09:36.315 - Sensor 3, Replica 2 raw value: 2.0
+2025-06-14 21:09:36.316 - Sensor 3, Replica 3 raw value: 9.0
+2025-06-14 21:09:36.316 - Sensor 3 Discrepancy: Values [15.0, 2.0, 9.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:09:36.318 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:09:36.321 - --- System Simulation Finished ---
+2025-06-14 21:11:34.406 - --- System Simulation Started ---
+2025-06-14 21:11:44.412 - Sensor 1 (Temperature) reading: 3.42187574813479 C
+2025-06-14 21:11:44.415 - Sensor 3, Replica 2 raw value: 2.0
+2025-06-14 21:11:44.419 - Sensor 3 Discrepancy: Values [13.0, 2.0, 10.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:11:44.420 - Sensor 3: No previous value available for fallback. Resulting in -1.0.

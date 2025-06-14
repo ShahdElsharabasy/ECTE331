@@ -1,0 +1,2 @@
+2025-06-14 21:02:43.166 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:11:44.423 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
