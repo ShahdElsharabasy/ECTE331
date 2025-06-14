@@ -26,3 +26,60 @@
 2025-06-14 21:11:44.415 - Sensor 3, Replica 2 raw value: 2.0
 2025-06-14 21:11:44.419 - Sensor 3 Discrepancy: Values [13.0, 2.0, 10.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
 2025-06-14 21:11:44.420 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:14:44.208 - --- System Simulation Started ---
+2025-06-14 21:14:49.442 - User set temperature cap to: 10.0
+2025-06-14 21:14:49.448 - Sensor 3, Replica 1 raw value: 1.0
+2025-06-14 21:14:49.448 - Sensor 3, Replica 2 raw value: 9.0
+2025-06-14 21:14:49.450 - Sensor 3 Discrepancy: Values [1.0, 9.0, 2.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:14:49.452 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:16:27.954 - Sensor 1 (Temperature) reading: 1.5620735358969484 C
+2025-06-14 21:16:27.955 - Sensor 2 (Humidity) reading: 32.678999269632634 %RH
+2025-06-14 21:16:27.958 - Sensor 3, Replica 1 raw value: 14.0
+2025-06-14 21:16:27.963 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:16:27.965 - --- System Simulation Finished ---
+2025-06-14 21:18:42.540 - --- System Simulation Started ---
+2025-06-14 21:19:55.015 - User set temperature cap to: 22.0
+2025-06-14 21:19:55.019 - Sensor 2 (Humidity) reading: 41.20773561138071 %RH
+2025-06-14 21:19:55.025 - Sensor 3, Replica 3 raw value: 17.0
+2025-06-14 21:19:55.028 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:19:55.029 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:19:55.030 - --- System Simulation Finished ---
+2025-06-14 21:20:59.177 - Sensor 3, Replica 1 raw value: 2.0
+2025-06-14 21:20:59.178 - Sensor 3, Replica 2 raw value: 9.0
+2025-06-14 21:20:59.179 - Sensor 3, Replica 3 raw value: 7.0
+2025-06-14 21:20:59.184 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:21:12.360 - --- System Simulation Started ---
+2025-06-14 21:21:18.154 - User set temperature cap to: 600.0
+2025-06-14 21:21:18.156 - Sensor 1 (Temperature) reading: 345.1264892902882 C
+2025-06-14 21:21:18.158 - Sensor 2 (Humidity) reading: 77.41577087857941 %RH
+2025-06-14 21:21:18.160 - Sensor 3, Replica 1 raw value: 13.0
+2025-06-14 21:21:18.165 - Sensor 3 Discrepancy: Values [13.0, 6.0, 14.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:21:18.167 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:21:18.168 - --- System Simulation Finished ---
+2025-06-14 21:23:22.207 - Sensor 1 (Temperature) reading: 66.82550158860319 C
+2025-06-14 21:23:22.207 - Sensor 2 (Humidity) reading: 13.958004617785313 %RH
+2025-06-14 21:23:22.208 - Sensor 3, Replica 1 raw value: 11.0
+2025-06-14 21:23:22.209 - Sensor 3, Replica 2 raw value: 19.0
+2025-06-14 21:23:22.209 - Sensor 3, Replica 3 raw value: 11.0
+2025-06-14 21:23:22.210 - Sensor 3 Discrepancy: Values [11.0, 19.0, 11.0]. Majority is 11.0. Outlier sensor ID: S2 (value 19.0)
+2025-06-14 21:24:19.512 - --- System Simulation Started ---
+2025-06-14 21:24:23.401 - User set temperature cap to: 600.0
+2025-06-14 21:24:23.403 - Sensor 1 (Temperature) reading: 424.5994305176475 C
+2025-06-14 21:24:23.404 - Sensor 2 (Humidity) reading: 69.59450056479417 %RH
+2025-06-14 21:24:23.405 - Sensor 3, Replica 1 raw value: 4.0
+2025-06-14 21:24:23.406 - Sensor 3, Replica 2 raw value: 8.0
+2025-06-14 21:24:23.407 - Sensor 3, Replica 3 raw value: 6.0
+2025-06-14 21:24:23.408 - Sensor 3 Discrepancy: Values [4.0, 8.0, 6.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:24:23.410 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:24:23.411 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:24:23.413 - --- System Simulation Finished ---
+2025-06-14 21:25:33.965 - Sensor 1 (Temperature) reading: 416.90853048430483 C
+2025-06-14 21:25:33.967 - Sensor 2 (Humidity) reading: 90.80948210927343 %RH
+2025-06-14 21:25:33.975 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:25:33.976 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
+2025-06-14 21:26:07.376 - --- System Simulation Started ---
+2025-06-14 21:26:11.460 - User set temperature cap to: 600.0
+2025-06-14 21:26:11.462 - Sensor 1 (Temperature) reading: 166.92261499281176 C
+2025-06-14 21:26:11.463 - Sensor 2 (Humidity) reading: 36.72964873622053 %RH
+2025-06-14 21:26:11.466 - Sensor 3, Replica 3 raw value: 17.0
+2025-06-14 21:26:11.467 - Sensor 3 Discrepancy: Values [19.0, 19.0, 17.0]. Majority is 19.0. Outlier sensor ID: S3 (value 17.0)

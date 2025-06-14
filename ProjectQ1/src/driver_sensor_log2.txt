@@ -5,3 +5,14 @@
 2025-06-14 21:09:36.320 - Sensor 3 (Critical Sensor) - Final Voted Value: -1.0
 2025-06-14 21:11:44.413 - Sensor 2 (Humidity) reading: 76.7200339362306 %RH
 2025-06-14 21:11:44.416 - Sensor 3, Replica 3 raw value: 10.0
+2025-06-14 21:14:49.450 - Sensor 3, Replica 3 raw value: 2.0
+2025-06-14 21:14:49.451 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:14:49.453 - --- System Simulation Finished ---
+2025-06-14 21:16:27.953 - User set temperature cap to: 10.0
+2025-06-14 21:16:27.961 - Sensor 3, Replica 3 raw value: 1.0
+2025-06-14 21:19:55.018 - Sensor 1 (Temperature) reading: 4.529609286095928 C
+2025-06-14 21:20:59.183 - Sensor 3: No previous value available for fallback. Resulting in -1.0.
+2025-06-14 21:23:22.205 - User set temperature cap to: 600.0
+2025-06-14 21:23:22.213 - --- System Simulation Finished ---
+2025-06-14 21:25:33.971 - Sensor 3, Replica 2 raw value: 11.0
+2025-06-14 21:25:33.973 - Sensor 3, Replica 3 raw value: 5.0

@@ -1,2 +1,8 @@
 2025-06-14 21:02:30.079 - --- System Simulation Started ---
 2025-06-14 21:03:26.739 - --- System Simulation Finished ---
+2025-06-14 21:19:55.022 - Sensor 3, Replica 1 raw value: 11.0
+2025-06-14 21:20:59.171 - User set temperature cap to: 30.0
+2025-06-14 21:20:59.182 - Sensor 3 Discrepancy: Values [2.0, 9.0, 7.0]. All replicas differ. No majority. Outlier IDs: S1, S2, S3.
+2025-06-14 21:21:18.162 - Sensor 3, Replica 2 raw value: 6.0
+2025-06-14 21:23:09.278 - --- System Simulation Started ---
+2025-06-14 21:25:20.577 - --- System Simulation Started ---
