@@ -4,480 +4,315 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList; // Added for managing threads
-import java.util.List; // Added for managing threads
-import java.util.concurrent.atomic.AtomicIntegerArray; // Added for shared atomic histogram
-import java.util.concurrent.Callable; // Added for sub-histogram worker
-import java.util.concurrent.ExecutorService; // Added for managing thread pool
-import java.util.concurrent.Executors; // Added for managing thread pool
-import java.util.concurrent.Future; // Added for getting results from Callable
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import javax.imageio.ImageIO;
 
- 
-public class imageApplication{
+public class imageApplication {
 
-	public static int level = 255;
-	public static int numloops = 5;
+	// --- Configuration ---
+	public static final int L = 255; // The highest intensity value for an 8-bit image
+	public static final int NUM_LOOPS = 3; // Number of times to run each test for a stable average
 
-   
+	/**
+	 * Main entry point for the application. Orchestrates the reading of an image,
+	 * running single-threaded and various multi-threaded histogram equalization algorithms,
+	 * and printing their performance.
+	 * @param args Command line arguments (not used).
+	 */
 	public static void main(String[] args) {
-		String inputImagePath = "C:\\Users\\shahd\\Downloads\\ECTE331 Project Question2\\";
-		String outputBasePath = "C:\\Users\\shahd\\Downloads\\ECTE331 Project Question2\\";
+		String inputImagePath = "Rain_Tree.jpg"; // Assumes image is in project root
+		String outputBasePath = "./"; // Save output in the project root
 
-		String fileName1 = inputImagePath + "Rain_Tree.jpg";
-		// String fileName2="c:/image/Rain_Tree.jpg"; // This variable was unused for specific outputs
+		System.out.println("Reading image: " + inputImagePath);
+		colourImage inputImg = imageReadWrite.readJpgImage(inputImagePath);
+		if (inputImg == null) return; // Exit if image read failed
 
-		// int[] numThread = {1,2,4,10}; // Will be used later for multithreading
+		// --- Run Single-Threaded Benchmark ---
+		System.out.println("\n--- Starting Single-Threaded Benchmark ---");
+		long totalSingleThreadTime = 0;
+		for (int i = 0; i < NUM_LOOPS; i++) {
+			colourImage outputImg = new colourImage(inputImg.width, inputImg.height);
+			long startTime = System.nanoTime();
+			SingleHistogramEqualization(inputImg, outputImg);
+			totalSingleThreadTime += (System.nanoTime() - startTime);
+		}
+		long avgSingleThreadTime = (totalSingleThreadTime / NUM_LOOPS) / 1_000_000;
+		System.out.printf("Single-Threaded Execution Time (avg over %d runs): %d ms\n", NUM_LOOPS, avgSingleThreadTime);
 		
-		colourImage inputImg = new colourImage();
-        // read the image filename1 and store its dimension and pixel values in ImgStruct
-		imageReadWrite.readJpgImage(fileName1, inputImg);
+		// Save one final result for verification
+		colourImage finalOutputSingle = new colourImage(inputImg.width, inputImg.height);
+		SingleHistogramEqualization(inputImg, finalOutputSingle);
+		imageReadWrite.writeJpgImage(finalOutputSingle, outputBasePath + "Rain_Tree_Output_Single.jpg");
 
-		if (inputImg.width == 0 || inputImg.height == 0) {
-			System.err.println("Failed to read input image or image is empty. Aborting processing.");
-			return; // Exit main or handle error appropriately
-		}
+		// CHANGE: The array is now named 'numOfThreads' as per the requirement.
+		int[] numOfThreads = {1, 2, 4, 8};
 
-		// Create an output image structure
-		colourImage outputImg = new colourImage();
-		outputImg.width = inputImg.width;
-		outputImg.height = inputImg.height;
-		outputImg.pixels = new short[inputImg.height][inputImg.width][3];
-
-		System.out.println("Starting Single-Threaded Histogram Equalization...");
-		long startTimeSingle = System.currentTimeMillis();
-		for(int i = 0; i < numloops; i++) {
-			SingleHistogramEqualization(inputImg, outputImg); // Use a distinct output for verification if needed
-		}
-		long endTimeSingle = System.currentTimeMillis();
-		long durationSingle = (endTimeSingle - startTimeSingle) / numloops;
-		System.out.println("Single-Threaded Execution Time (avg over " + numloops + " runs): " + durationSingle + " ms");
-
-		// Save single-threaded result
-		String singleThreadedOutputFile = outputBasePath + "Rain_Tree_Output_Single.jpg";
-		imageReadWrite.writeJpgImage(outputImg, singleThreadedOutputFile);
-		System.out.println("Processed image (single-threaded) saved to: " + singleThreadedOutputFile);
-
-		// --- Multi-Threaded Execution (Design i - Shared Atomic Histogram - Variant a) ---
-		int[] numThreadsOptions = {1, 2, 4, 8}; // Example thread counts to test
-		colourImage outputImgMultiAtomic = new colourImage(); // Separate output for this version
-		outputImgMultiAtomic.width = inputImg.width;
-		outputImgMultiAtomic.height = inputImg.height;
-		outputImgMultiAtomic.pixels = new short[inputImg.height][inputImg.width][3];
-
-		for (int numThreads : numThreadsOptions) {
-			System.out.println("\nStarting Multi-Threaded (Shared Atomic Histogram, Variant a) with " + numThreads + " threads...");
-			long startTimeMultiAtomicA = System.currentTimeMillis();
-			for (int i = 0; i < numloops; i++) {
-				multiThreadedHistogramEqualization_SharedAtomic(inputImg, outputImgMultiAtomic, numThreads, 'a');
-			}
-			long endTimeMultiAtomicA = System.currentTimeMillis();
-			long durationMultiAtomicA = (endTimeMultiAtomicA - startTimeMultiAtomicA) / numloops;
-			System.out.println("Multi-Threaded (Shared Atomic, Variant a) with " + numThreads + " threads - Execution Time (avg over " + numloops + " runs): " + durationMultiAtomicA + " ms");
+		// --- Run Multi-Threaded Benchmarks ---
+		for (int num : numOfThreads) {
+			// Design i: Shared Atomic Histogram (Contiguous)
+			runAndMeasure("Shared Atomic (Contiguous)", inputImg, num, (in, out) ->
+					multiThreadedHistogramEqualization_SharedAtomic(in, out, num, 'a'));
 			
-			// Save multi-threaded result (optional, could be for the last numThreads option or specific one)
-			if (numThreads == numThreadsOptions[numThreadsOptions.length-1]) { // Save last result for variant 'a'
-				String multiAtomicAOutputFile = outputBasePath + "Rain_Tree_Output_Multi_Atomic_A_" + numThreads + ".jpg";
-				imageReadWrite.writeJpgImage(outputImgMultiAtomic, multiAtomicAOutputFile);
-				System.out.println("Processed image (multi-threaded, atomic, variant a, " + numThreads + " threads) saved to: " + multiAtomicAOutputFile);
-			}
+			// Design i: Shared Atomic Histogram (Interleaved)
+			runAndMeasure("Shared Atomic (Interleaved)", inputImg, num, (in, out) ->
+					multiThreadedHistogramEqualization_SharedAtomic(in, out, num, 'b'));
 
-			// Variant b for Shared Atomic Histogram
-			System.out.println("\nStarting Multi-Threaded (Shared Atomic Histogram, Variant b) with " + numThreads + " threads...");
-			colourImage outputImgMultiAtomicB = new colourImage(); // Separate output for this version if needed for verification
-			outputImgMultiAtomicB.width = inputImg.width;
-			outputImgMultiAtomicB.height = inputImg.height;
-			outputImgMultiAtomicB.pixels = new short[inputImg.height][inputImg.width][3];
-			long startTimeMultiAtomicB = System.currentTimeMillis();
-			for (int i = 0; i < numloops; i++) {
-				multiThreadedHistogramEqualization_SharedAtomic(inputImg, outputImgMultiAtomicB, numThreads, 'b');
-			}
-			long endTimeMultiAtomicB = System.currentTimeMillis();
-			long durationMultiAtomicB = (endTimeMultiAtomicB - startTimeMultiAtomicB) / numloops;
-			System.out.println("Multi-Threaded (Shared Atomic, Variant b) with " + numThreads + " threads - Execution Time (avg over " + numloops + " runs): " + durationMultiAtomicB + " ms");
-
-			if (numThreads == numThreadsOptions[numThreadsOptions.length-1]) { // Save last result for variant 'b'
-				String multiAtomicBOutputFile = outputBasePath + "Rain_Tree_Output_Multi_Atomic_B_" + numThreads + ".jpg";
-				imageReadWrite.writeJpgImage(outputImgMultiAtomicB, multiAtomicBOutputFile);
-				System.out.println("Processed image (multi-threaded, atomic, variant b, " + numThreads + " threads) saved to: " + multiAtomicBOutputFile);
-			}
+			// Design ii: Sub-Histograms
+			runAndMeasure("Sub-Histograms", inputImg, num, (in, out) ->
+					multiThreadedHistogramEqualization_SubHistograms(in, out, num));
 		}
+	}
 
-		// --- Multi-Threaded Execution (Design ii - Multiple Sub-Histograms) ---
-		colourImage outputImgMultiSub = new colourImage(); // Separate output for this version
-		outputImgMultiSub.width = inputImg.width;
-		outputImgMultiSub.height = inputImg.height;
-		outputImgMultiSub.pixels = new short[inputImg.height][inputImg.width][3];
-
-		for (int numThreads : numThreadsOptions) { // Reuse numThreadsOptions
-			System.out.println("\nStarting Multi-Threaded (Multiple Sub-Histograms) with " + numThreads + " threads...");
-			long startTimeMultiSub = System.currentTimeMillis();
-			for (int i = 0; i < numloops; i++) {
-				multiThreadedHistogramEqualization_SubHistograms(inputImg, outputImgMultiSub, numThreads);
-			}
-			long endTimeMultiSub = System.currentTimeMillis();
-			long durationMultiSub = (endTimeMultiSub - startTimeMultiSub) / numloops;
-			System.out.println("Multi-Threaded (Sub-Histograms) with " + numThreads + " threads - Execution Time (avg over " + numloops + " runs): " + durationMultiSub + " ms");
-
-			// Save multi-threaded result (optional)
-			if (numThreads == numThreadsOptions[numThreadsOptions.length-1]) { // Save last result
-				String multiSubHistOutputFile = outputBasePath + "Rain_Tree_Output_Multi_SubHist_" + numThreads + ".jpg";
-				imageReadWrite.writeJpgImage(outputImgMultiSub, multiSubHistOutputFile);
-				System.out.println("Processed image (multi-threaded, sub-histograms, " + numThreads + " threads) saved to: " + multiSubHistOutputFile);
-			}
+	/**
+	 * CHANGE: Helper method to run and measure the execution time of a given algorithm.
+	 * This refactors the main method to be cleaner and fixes the averaging bug.
+	 */
+	private static void runAndMeasure(String testName, colourImage input, int numThreads, RunnableAlgorithm algorithm) {
+		System.out.printf("\n--- Starting: %s with %d thread(s) ---\n", testName, numThreads);
+		long totalTime = 0;
+		for (int i = 0; i < NUM_LOOPS; i++) {
+			colourImage output = new colourImage(input.width, input.height);
+			long startTime = System.nanoTime();
+			algorithm.run(input, output);
+			totalTime += (System.nanoTime() - startTime);
 		}
-	} // main		
+		long avgTime = (totalTime / NUM_LOOPS) / 1_000_000;
+		System.out.printf("%s with %d thread(s) - Execution Time (avg over %d runs): %d ms\n", testName, numThreads, NUM_LOOPS, avgTime);
+	}
 
+	// Functional interface for passing different algorithms to the test runner
+	@FunctionalInterface
+	interface RunnableAlgorithm {
+		void run(colourImage input, colourImage output);
+	}
+
+	/**
+	 * Implements histogram equalization using a single thread. Follows the optimized algorithm.
+	 */
 	public static void SingleHistogramEqualization(colourImage input, colourImage output) {
-		int width = input.width;
-		int height = input.height;
-		int size = height * width;
+		int size = input.height * input.width;
 
-		for(int colorChannel = 0; colorChannel < 3; colorChannel++) {
-			// 1. Histogram Computation
-			int[] histogram = new int[level + 1]; // Size L+1 (e.g., 256 for 0-255)
-			for(int i = 0; i < height; i++) {
-				for(int j = 0; j < width; j++) {
+		for (int colorChannel = 0; colorChannel < 3; colorChannel++) {
+			int[] histogram = new int[L + 1];
+			for (int i = 0; i < input.height; i++) {
+				for (int j = 0; j < input.width; j++) {
 					histogram[input.pixels[i][j][colorChannel]]++;
 				}
 			}
 
-			// 2. Cumulative Histogram Transformation
-			long[] cumulativeHistogram = new long[level + 1];
-			cumulativeHistogram[0] = histogram[0];
-			for(int i = 1; i <= level; i++) {
-				cumulativeHistogram[i] = cumulativeHistogram[i-1] + histogram[i];
+			long[] cumulativeHist = new long[L + 1];
+			cumulativeHist[0] = histogram[0];
+			for (int i = 1; i <= L; i++) {
+				cumulativeHist[i] = cumulativeHist[i - 1] + histogram[i];
+			}
+			
+			// This is the optimized approach: create a lookup table (LUT)
+			int[] lookupTable = new int[L + 1];
+			for (int i = 0; i <= L; i++) {
+				lookupTable[i] = (int) Math.round((double) (cumulativeHist[i] * L) / size);
 			}
 
-			// Transform cumulative histogram: CH[i] = round((CH[i] * L) / size)
-			int[] transformedCumulativeHistogram = new int[level + 1];
-			for(int i = 0; i <= level; i++) {
-				transformedCumulativeHistogram[i] = (int) Math.round((double)(cumulativeHistogram[i] * level) / size);
-			}
-
-			// 3. Image Mapping
-			for(int i = 0; i < height; i++) {
-				for(int j = 0; j < width; j++) {
-					short originalPixelValue = input.pixels[i][j][colorChannel];
-					output.pixels[i][j][colorChannel] = (short) transformedCumulativeHistogram[originalPixelValue];
-				}
-			}
-		}
-	} // SingleHistogramEqualization 
-
-	// Helper class for multi-threaded histogram building (Shared Atomic Histogram)
-	static class AtomicHistogramWorker implements Runnable {
-		private final short[] channelPixels1D;
-		private final int startIdx;
-		private final int endIdx;
-		private final AtomicIntegerArray sharedHistogram;
-		private final char variant; // 'a' for contiguous, 'b' for interleaved
-		private final int numThreads; // Needed for interleaved variant
-		private final int threadId;   // Needed for interleaved variant
-
-
-		public AtomicHistogramWorker(short[] channelPixels1D, int startIdx, int endIdx, AtomicIntegerArray sharedHistogram, char variant, int threadId, int numThreads) {
-			this.channelPixels1D = channelPixels1D;
-			this.startIdx = startIdx;
-			this.endIdx = endIdx;
-			this.sharedHistogram = sharedHistogram;
-			this.variant = variant;
-			this.threadId = threadId;
-			this.numThreads = numThreads;
-		}
-
-		@Override
-		public void run() {
-			if (variant == 'a') { // Variant (a) - Contiguous Blocks
-				for (int i = startIdx; i < endIdx; i++) {
-					sharedHistogram.incrementAndGet(channelPixels1D[i] & 0xFFFF); // Use mask for unsigned short
-				}
-			} else if (variant == 'b') { // Variant (b) - Interleaved Pixels
-				for (int i = threadId; i < channelPixels1D.length; i += numThreads) {
-                    // Ensure the pixel index is within the worker's conceptual overall segment,
-                    // though actual access is interleaved across the whole array.
-                    // This check might be redundant if startIdx/endIdx are not used for 'b'
-                    // or if partitions for 'b' are defined differently.
-                    // For now, assuming each thread processes its interleaved part of the *entire* channel.
-					sharedHistogram.incrementAndGet(channelPixels1D[i] & 0xFFFF);
+			for (int i = 0; i < input.height; i++) {
+				for (int j = 0; j < input.width; j++) {
+					output.pixels[i][j][colorChannel] = (short) lookupTable[input.pixels[i][j][colorChannel]];
 				}
 			}
 		}
 	}
 
+	/**
+	 * Implements histogram equalization using multiple threads and a shared AtomicIntegerArray.
+	 */
 	public static void multiThreadedHistogramEqualization_SharedAtomic(colourImage input, colourImage output, int numOfThreads, char variant) {
-		int width = input.width;
-		int height = input.height;
-		int totalPixelsPerChannel = width * height;
-
-		List<Thread> threads = new ArrayList<>();
+		int totalPixels = input.width * input.height;
 
 		for (int colorChannel = 0; colorChannel < 3; colorChannel++) {
-			// 1. Flatten pixel data for the current channel to 1D array
-			short[] channelPixels1D = new short[totalPixelsPerChannel];
-			int k = 0;
-			for (int i = 0; i < height; i++) {
-				for (int j = 0; j < width; j++) {
-					channelPixels1D[k++] = input.pixels[i][j][colorChannel];
-				}
-			}
-
-			// 2. Initialize shared AtomicIntegerArray histogram
-			AtomicIntegerArray atomicHistogram = new AtomicIntegerArray(level + 1);
-
-			// 3. Create and start threads for histogram building
-			threads.clear();
-			int pixelsPerThread = totalPixelsPerChannel / numOfThreads;
-			int remainderPixels = totalPixelsPerChannel % numOfThreads;
-
+			short[] channelPixels1D = flattenChannel(input, colorChannel);
+			AtomicIntegerArray atomicHistogram = new AtomicIntegerArray(L + 1);
+			
+			List<Thread> threads = new ArrayList<>();
+			int pixelsPerThread = totalPixels / numOfThreads;
 			for (int t = 0; t < numOfThreads; t++) {
-				int startIdx = 0; // Only used for variant 'a'
-				int endIdx = 0;   // Only used for variant 'a'
-
-				if (variant == 'a') {
-					startIdx = t * pixelsPerThread + Math.min(t, remainderPixels);
-					endIdx = startIdx + pixelsPerThread + (t < remainderPixels ? 1 : 0);
-				}
-                // For variant 'b', startIdx/endIdx for the worker are conceptual for its assigned portion,
-                // but the loop iterates based on threadId and numThreads across the whole array.
-                // The AtomicHistogramWorker constructor takes startIdx and endIdx, but they are not strictly
-                // used by variant 'b' in its loop logic, which is fine.
-				AtomicHistogramWorker worker = new AtomicHistogramWorker(channelPixels1D, startIdx, endIdx, atomicHistogram, variant, t, numOfThreads);
-				Thread thread = new Thread(worker);
+				int start = t * pixelsPerThread;
+				int end = (t == numOfThreads - 1) ? totalPixels : start + pixelsPerThread;
+				Thread thread = new Thread(new AtomicHistogramWorker(channelPixels1D, start, end, atomicHistogram, variant, t, numOfThreads));
 				threads.add(thread);
 				thread.start();
 			}
 
-			// 4. Wait for all threads to complete
 			for (Thread thread : threads) {
 				try {
 					thread.join();
-				} catch (InterruptedException e) {
-					System.err.println("Thread interrupted: " + e.getMessage());
-					Thread.currentThread().interrupt(); // Restore interrupted status
-				}
+				} catch (InterruptedException e) { e.printStackTrace(); }
+			}
+			
+			// Remainder of algorithm is sequential and uses the final histogram
+			processAndMap(input, output, colorChannel, atomicHistogram, totalPixels);
+		}
+	}
+
+	/**
+	 * Implements histogram equalization using multiple threads, each with its own sub-histogram.
+	 */
+	public static void multiThreadedHistogramEqualization_SubHistograms(colourImage input, colourImage output, int numOfThreads) {
+		int totalPixels = input.width * input.height;
+		ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
+
+		for (int colorChannel = 0; colorChannel < 3; colorChannel++) {
+			short[] channelPixels1D = flattenChannel(input, colorChannel);
+			
+			List<Future<int[]>> futureResults = new ArrayList<>();
+			int pixelsPerThread = totalPixels / numOfThreads;
+			for (int t = 0; t < numOfThreads; t++) {
+				int start = t * pixelsPerThread;
+				int end = (t == numOfThreads - 1) ? totalPixels : start + pixelsPerThread;
+				futureResults.add(executor.submit(new SubHistogramWorker(channelPixels1D, start, end)));
 			}
 
-			// 5. Convert AtomicIntegerArray to int[] histogram
-			int[] finalHistogram = new int[level + 1];
-			for (int i = 0; i <= level; i++) {
-				finalHistogram[i] = atomicHistogram.get(i);
+			int[] finalHistogram = new int[L + 1];
+			for (Future<int[]> future : futureResults) {
+				try {
+					int[] localHist = future.get();
+					for (int i = 0; i <= L; i++) {
+						finalHistogram[i] += localHist[i];
+					}
+				} catch (Exception e) { e.printStackTrace(); }
 			}
+			
+			processAndMap(input, output, colorChannel, finalHistogram, totalPixels);
+		}
+		executor.shutdown();
+	}
+	
+	// --- Helper Methods and Classes ---
 
-			// 6. Cumulative Histogram Transformation (Main thread)
-			long[] cumulativeHistogram = new long[level + 1];
-			cumulativeHistogram[0] = finalHistogram[0];
-			for (int i = 1; i <= level; i++) {
-				cumulativeHistogram[i] = cumulativeHistogram[i-1] + finalHistogram[i];
+	private static short[] flattenChannel(colourImage input, int channel) {
+		short[] flattened = new short[input.width * input.height];
+		int k = 0;
+		for (int i = 0; i < input.height; i++) {
+			for (int j = 0; j < input.width; j++) {
+				flattened[k++] = input.pixels[i][j][channel];
 			}
+		}
+		return flattened;
+	}
+	
+	private static void processAndMap(colourImage input, colourImage output, int channel, AtomicIntegerArray histogram, int totalPixels) {
+		int[] regularHistogram = new int[L + 1];
+		for (int i = 0; i <= L; i++) regularHistogram[i] = histogram.get(i);
+		processAndMap(input, output, channel, regularHistogram, totalPixels);
+	}
 
-			int[] transformedCumulativeHistogram = new int[level + 1];
-			for (int i = 0; i <= level; i++) {
-				transformedCumulativeHistogram[i] = (int) Math.round((double)(cumulativeHistogram[i] * level) / totalPixelsPerChannel);
+	private static void processAndMap(colourImage input, colourImage output, int channel, int[] histogram, int totalPixels) {
+		long[] cumulativeHist = new long[L + 1];
+		cumulativeHist[0] = histogram[0];
+		for (int i = 1; i <= L; i++) {
+			cumulativeHist[i] = cumulativeHist[i - 1] + histogram[i];
+		}
+
+		int[] lookupTable = new int[L + 1];
+		for (int i = 0; i <= L; i++) {
+			lookupTable[i] = (int) Math.round((double) (cumulativeHist[i] * L) / totalPixels);
+		}
+
+		for (int i = 0; i < input.height; i++) {
+			for (int j = 0; j < input.width; j++) {
+				output.pixels[i][j][channel] = (short) lookupTable[input.pixels[i][j][channel]];
 			}
+		}
+	}
+	
+	static class AtomicHistogramWorker implements Runnable {
+		private final short[] pixels;
+		private final int start, end, threadId, numThreads;
+		private final AtomicIntegerArray sharedHistogram;
+		private final char variant;
 
-			// 7. Image Mapping (Main thread)
-			for (int i = 0; i < height; i++) {
-				for (int j = 0; j < width; j++) {
-					short originalPixelValue = input.pixels[i][j][colorChannel];
-					output.pixels[i][j][colorChannel] = (short) transformedCumulativeHistogram[originalPixelValue & 0xFFFF];
-				}
-			}
-		} // end of colorChannel loop
-	} // multiThreadedHistogramEqualization_SharedAtomic
-
-	// Helper class for multi-threaded histogram building (Multiple Sub-Histograms)
-	static class SubHistogramWorker implements Callable<int[]> {
-		private final short[] channelPixels1D;
-		private final int startIdx;
-		private final int endIdx;
-		private final int histogramLevels;
-
-		public SubHistogramWorker(short[] channelPixels1D, int startIdx, int endIdx, int histogramLevels) {
-			this.channelPixels1D = channelPixels1D;
-			this.startIdx = startIdx;
-			this.endIdx = endIdx;
-			this.histogramLevels = histogramLevels;
+		AtomicHistogramWorker(short[] p, int s, int e, AtomicIntegerArray hist, char v, int tId, int nT) {
+			pixels = p; start = s; end = e; sharedHistogram = hist; variant = v; threadId = tId; numThreads = nT;
 		}
 
 		@Override
-		public int[] call() throws Exception {
-			int[] localHistogram = new int[histogramLevels + 1];
-			for (int i = startIdx; i < endIdx; i++) {
-				localHistogram[channelPixels1D[i] & 0xFFFF]++; // Use mask for unsigned short
+		public void run() {
+			if (variant == 'a') {
+				for (int i = start; i < end; i++) sharedHistogram.incrementAndGet(pixels[i] & 0xFFFF);
+			} else { // variant 'b'
+				for (int i = threadId; i < pixels.length; i += numThreads) sharedHistogram.incrementAndGet(pixels[i] & 0xFFFF);
 			}
+		}
+	}
+
+	static class SubHistogramWorker implements Callable<int[]> {
+		private final short[] pixels;
+		private final int start, end;
+
+		SubHistogramWorker(short[] p, int s, int e) { pixels = p; start = s; end = e; }
+
+		@Override
+		public int[] call() {
+			int[] localHistogram = new int[L + 1];
+			for (int i = start; i < end; i++) localHistogram[pixels[i] & 0xFFFF]++;
 			return localHistogram;
 		}
 	}
 
-	public static void multiThreadedHistogramEqualization_SubHistograms(colourImage input, colourImage output, int numOfThreads) {
-		int width = input.width;
-		int height = input.height;
-		int totalPixelsPerChannel = width * height;
-
-		ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
-
-		for (int colorChannel = 0; colorChannel < 3; colorChannel++) {
-			// 1. Flatten pixel data for the current channel to 1D array
-			short[] channelPixels1D = new short[totalPixelsPerChannel];
-			int k = 0;
-			for (int i = 0; i < height; i++) {
-				for (int j = 0; j < width; j++) {
-					channelPixels1D[k++] = input.pixels[i][j][colorChannel];
+	static class imageReadWrite {
+		public static colourImage readJpgImage(String fileName) {
+			try {
+				BufferedImage image = ImageIO.read(new File(fileName));
+				if (image == null) {
+					System.err.println("Error: Could not read image file. It might be missing or corrupted.");
+					return null;
 				}
-			}
-
-			// 2. Create tasks for local histogram building
-			List<Future<int[]>> futureLocalHistograms = new ArrayList<>();
-			int pixelsPerThread = totalPixelsPerChannel / numOfThreads;
-			int remainderPixels = totalPixelsPerChannel % numOfThreads;
-
-			for (int t = 0; t < numOfThreads; t++) {
-				int startIdx = t * pixelsPerThread + Math.min(t, remainderPixels);
-				int endIdx = startIdx + pixelsPerThread + (t < remainderPixels ? 1 : 0);
-				SubHistogramWorker worker = new SubHistogramWorker(channelPixels1D, startIdx, endIdx, level);
-				futureLocalHistograms.add(executor.submit(worker));
-			}
-
-			// 3. Collect and merge local histograms
-			int[] finalHistogram = new int[level + 1];
-			for (Future<int[]> future : futureLocalHistograms) {
-				try {
-					int[] localHist = future.get();
-					for (int i = 0; i <= level; i++) {
-						finalHistogram[i] += localHist[i];
+				colourImage img = new colourImage(image.getWidth(), image.getHeight());
+				for (int y = 0; y < img.height; y++) {
+					for (int x = 0; x < img.width; x++) {
+						Color color = new Color(image.getRGB(x, y));
+						img.pixels[y][x][0] = (short) color.getRed();
+						img.pixels[y][x][1] = (short) color.getGreen();
+						img.pixels[y][x][2] = (short) color.getBlue();
 					}
-				} catch (Exception e) {
-					System.err.println("Error collecting sub-histogram: " + e.getMessage());
-					Thread.currentThread().interrupt();
-					// Handle error appropriately, maybe by aborting or using partial data if robust
-					return; // Exit if a thread failed critically
 				}
+				return img;
+			} catch (IOException e) {
+				System.err.println("Error reading image file: " + e.getMessage());
+				return null;
 			}
+		}
 
-			// 4. Cumulative Histogram Transformation (Main thread)
-			long[] cumulativeHistogram = new long[level + 1];
-			cumulativeHistogram[0] = finalHistogram[0];
-			for (int i = 1; i <= level; i++) {
-				cumulativeHistogram[i] = cumulativeHistogram[i-1] + finalHistogram[i];
-			}
-
-			int[] transformedCumulativeHistogram = new int[level + 1];
-			for (int i = 0; i <= level; i++) {
-				if (totalPixelsPerChannel > 0) { // Avoid division by zero for empty images
- 				    transformedCumulativeHistogram[i] = (int) Math.round((double)(cumulativeHistogram[i] * level) / totalPixelsPerChannel);
-				} else {
-					transformedCumulativeHistogram[i] = 0;
+		public static void writeJpgImage(colourImage img, String fileName) {
+			try {
+				BufferedImage image = new BufferedImage(img.width, img.height, BufferedImage.TYPE_INT_RGB);
+				for (int y = 0; y < img.height; y++) {
+					for (int x = 0; x < img.width; x++) {
+						int r = img.pixels[y][x][0];
+						int g = img.pixels[y][x][1];
+						int b = img.pixels[y][x][2];
+						image.setRGB(x, y, new Color(r, g, b).getRGB());
+					}
 				}
+				ImageIO.write(image, "jpg", new File(fileName));
+				System.out.println("Successfully saved image to: " + fileName);
+			} catch (IOException e) {
+				System.err.println("Error writing image file: " + e.getMessage());
 			}
-
-			// 5. Image Mapping (Main thread)
-			for (int i = 0; i < height; i++) {
-				for (int j = 0; j < width; j++) {
-					short originalPixelValue = input.pixels[i][j][colorChannel];
-					output.pixels[i][j][colorChannel] = (short) transformedCumulativeHistogram[originalPixelValue & 0xFFFF];
-				}
-			}
-		} // end of colorChannel loop
-
-		executor.shutdown(); // Important to shut down the executor service
-	} // multiThreadedHistogramEqualization_SubHistograms
-  
-    	
-/**
- * 
- * A class with 2 Utility methods to read the pixels and dimension of an image, and write the image data into a jpeg file
- *
- */
-static class imageReadWrite{
-
-	public static void readJpgImage(String fileName, colourImage ImgStruct) {
-		 try {
-	            // Read the image file
-	            File file = new File(fileName);
-	            BufferedImage image = ImageIO.read(file);
-	            
-	            System.out.println("file: "+file.getCanonicalPath());
-	            
-	            // Check if the image is in sRGB color space
-	            if (!image.getColorModel().getColorSpace().isCS_sRGB()) {
-	                System.out.println("Image is not in sRGB color space");
-	                return;
-	            }
-	            
-	            // Get the width and height of the image
-	            int width = image.getWidth();
-	            int height = image.getHeight();
-	            ImgStruct.width=width;
-	            ImgStruct.height=height;
-	            ImgStruct.pixels=new short[height][width][3];
-
-	           // Loop over each pixel of the image and store its RGB color components in the array
-	            for (int y = 0; y < height; y++) {
-	                for (int x = 0; x < width; x++) {
-	                    // Get the color of the current pixel
-	                    int pixel = image.getRGB(x, y);
-	                    Color color = new Color(pixel, true);
-
-	                    // Store the red, green, and blue color components of the pixel in the array
-	                    ImgStruct.pixels[y][x][0] = (short) color.getRed();
-	                    ImgStruct.pixels[y][x][1] = (short) color.getGreen();
-	                    ImgStruct.pixels[y][x][2] = (short) color.getBlue();
-	                }
-	            }            
-	                       
-
-	        } catch (IOException e) {
-	            System.out.println("Error reading image file: " + e.getMessage());
-	        }  	
+		}
 	}
 
-	public static void writeJpgImage(colourImage ImgStruct, String fileName) {
-		 try {
-	    	 int width = ImgStruct.width;
-	         int height = ImgStruct.height;
-	         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+	static class colourImage {
+		public int width, height;
+		public short[][][] pixels;
 
-	         // Set the RGB color values of the BufferedImage using the pixel array
-	         for (int y = 0; y < height; y++) {
-	             for (int x = 0; x < width; x++) {
-	                 int rgb = new Color(ImgStruct.pixels[y][x][0], ImgStruct.pixels[y][x][1], ImgStruct.pixels[y][x][2]).getRGB();
-	                 image.setRGB(x, y, rgb);
-	             }
-	         }
-
-	         // Write the BufferedImage to a JPEG file
-	         File outputFile = new File(fileName);
-	         ImageIO.write(image, "jpg", outputFile);
-
-	     } catch (IOException e) {
-	         System.out.println("Error writing image file: " + e.getMessage());
-	     }       
-	
-       }//
-
-}
-
-static class matManipulation{
-	/**
-	 * reshape a matrix to a 1-D vector
-	 */
-	public static void mat2Vect (short [][] mat, int width, int height, short[] vect) {
-		for(int i=0;i<height; i++)
-			for (int j=0; j<width; j++)
-				vect[j+i*width]=mat[i][j];
+		public colourImage(int w, int h) {
+			width = w;
+			height = h;
+			pixels = new short[h][w][3];
+		}
 	}
-	
 }
-
-
-static class colourImage {
-	/**
-	 * A datastructure to store a colour image
-	 */
-	public int width;
-	public int height;
-	public short pixels[][][];
-}
-
-} // This is the potentially missing closing brace for imageApplication class
